@@ -1,14 +1,14 @@
 ## Akka HTTP template
 
-You can use [Giter8][g8] to create your own project from the template.
+You can use [Giter8](https://github.com/foundweekends/giter8) to create your own project from the template.
 
 Prerequisites:
 - JDK 8
-- sbt 0.13.15 or higher
+- Giter8 0.10.0
 
 Open a console and run the following command to apply this template:
  ```
-sbt new https://github.com/iRevive/akka-http-template.g8
+g8 https://github.com/iRevive/akka-http-template.g8
  ```
 
 ## Template configuration
@@ -39,15 +39,35 @@ The template comes with the following sources:
 * `EndpointSpec.scala` -- the class which tests routes.
 * `PersistenceSpec.scala` -- the class which has an integration test for a persistence module.
 * `docker-compose.yml` -- docker compose configuration. 
+* `README.md` - the documentation with explanation of all project functions.
 
 Once inside the project folder use the following command to run the code:
 ```
-sbt run
+sbt clean test it:test run
 ```
 
+## SBT plugins
+
+#### [sbt-release](https://github.com/sbt/sbt-release)
+The plugin configured without `publishArtifact` step. By default, it will publish a docker image locally. 
+
+#### [sbt-docker](https://github.com/marcuslonnberg/sbt-docker)
+Docker step integrated into release process.   
+During a release, the plugin will publish two images with two versions: `latest` and `current version` of the project.  
+You can publish the git-hash-based version using `sbt dev:docker`. 
+
+#### [sbt-native-packager](https://github.com/sbt/sbt-native-packager)
+Almost default configuration.
+
+#### [sbt-scoverage](https://github.com/scoverage/sbt-scoverage)
+Default configuration without changes. Coverage disabled by default.
+
+#### [sbt-revoler](https://github.com/spray/sbt-revolver)
+Default configuration without changes. 
+ 
 ## Integration tests
 
-This template will generate a docker-based environment for integration tests.
+This template will generate a docker-based environment for integration tests.  
 On the start of integration tests sbt will start MongoDB as a docker container, after tests it will be destroyed.
 
 ## Docker-compose configuration
