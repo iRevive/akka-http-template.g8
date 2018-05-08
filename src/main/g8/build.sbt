@@ -156,7 +156,7 @@ lazy val commonOptions = Seq(
   "-encoding", "utf-8",                // Specify character encoding used by source files.
   "-explaintypes",                     // Explain type errors in more detail.
   "-feature",                          // Emit warning and location for usages of features that should be imported explicitly.
-  "-language:existentials",            // Existential types (besides wildcard types) can be written and inferred
+  "-Ypartial-unification",             // Enable partial unification in type constructor inference
   "-language:experimental.macros",     // Allow macro definition (besides implementation and application)
   "-language:higherKinds",             // Allow higher-kinded types
   "-language:implicitConversions",     // Allow definition of implicit functions called views
@@ -173,7 +173,6 @@ lazy val warnOptions = Seq(
   "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
   "-Ywarn-numeric-widen",              // Warn when numerics are widened.
   "-Ywarn-value-discard",              // Warn when non-Unit expression results are unused.
-
   "-Ywarn-unused:implicits",           // Warn if an implicit parameter is unused.
   "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
   "-Ywarn-unused:locals",              // Warn if a local definition is unused.

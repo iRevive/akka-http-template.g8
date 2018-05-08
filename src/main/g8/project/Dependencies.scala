@@ -49,10 +49,17 @@ object Dependencies {
     "com.typesafe.scala-logging"  %% "scala-logging"            % Versions.scalaLogging,
     "ch.qos.logback"              %  "logback-classic"          % Versions.logback,
 
+    $if(useMongo.truthy)$
     "org.scalatest"               %% "scalatest"                % Versions.scalatest        % "it,test",
     "org.scalamock"               %% "scalamock"                % Versions.scalamock        % "it,test",
     "com.ironcorelabs"            %% "cats-scalatest"           % Versions.catsScalatest    % "it,test",
     "com.typesafe.akka"           %% "akka-http-testkit"        % Versions.akkaHttp         % "it,test"
+    $else$
+    "org.scalatest"               %% "scalatest"                % Versions.scalatest        % "test",
+    "org.scalamock"               %% "scalamock"                % Versions.scalamock        % "test",
+    "com.ironcorelabs"            %% "cats-scalatest"           % Versions.catsScalatest    % "test",
+    "com.typesafe.akka"           %% "akka-http-testkit"        % Versions.akkaHttp         % "test"
+    $endif$
   )
 
 }
