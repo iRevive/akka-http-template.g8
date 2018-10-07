@@ -1,96 +1,79 @@
 package $organization$
 
-import akka.actor.SupervisorStrategy.Stop
-import akka.actor.{Actor, ActorSystem, OneForOneStrategy, Props, SupervisorStrategy}
+import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.{ActorMaterializer, Materializer}
-import com.typesafe.config.{Config, ConfigFactory}
-import com.typesafe.scalalogging.{LazyLogging, StrictLogging}
-import $organization$.api.Endpoints
-import $organization$.persistence._
-import $organization$.util.ConfigOps
+import $organization$.util.ResultT.{defer, deferFuture}
+import $organization$.util.{BaseError, TimeUtils}
+import $organization$.util.logging.Loggable.InterpolatorOps._
+import $organization$.util.logging.{Logging, TraceId}
+import monix.eval.Task
+import monix.execution.Scheduler
 
-import scala.concurrent.ExecutionContext
-import scala.util.Failure
-import scala.util.control.NonFatal
-
-object Server extends StrictLogging {
+/**
+  * @author Maksim Ochenashko
+  */
+object Server extends Logging {
 
   def main(args: Array[String]): Unit = {
-    val config = ConfigFactory.load()
-
-    val system: ActorSystem = ActorSystem()
-
-    try {
-      val appLoader = Props(new AppLoader(config))
-      system.actorOf(Props(new Terminator(appLoader)), "app-terminator")
-    } catch {
-      case NonFatal(e) =>
-        logger.error(s"Application loading error [\${e.getMessage}]", e)
-        system.terminate()
-        throw e
-    }
+    startApp(ApplicationLoader.Default)
   }
 
-}
-
-final class AppLoader(config: Config) extends Actor with StrictLogging with ConfigOps {
-
-  import io.circe.generic.auto._
-  import io.circe.config.syntax._
-
-  override def receive: Actor.Receive = Actor.emptyBehavior
-
-  override def preStart(): Unit = startApp()
-
-  private def startApp(): Unit = {
-    implicit val ec: ExecutionContext = context.system.dispatcher
+  private def startApp(applicationLoader: ApplicationLoader): Unit = {
+    implicit val traceId: TraceId = TraceId(log"Startup-\${TimeUtils.zonedDateTimeNow()}")
+    implicit val system: ActorSystem = ActorSystem()
     implicit val mat: Materializer = ActorMaterializer()
+    implicit val scheduler: Scheduler = monix.execution.Scheduler.Implicits.global
 
-    val endpoints = new Endpoints()
-
-    val ServerSettings(host, port) = config.loadUnsafe[ServerSettings]("application.http")
-
-    $if(useMongo.truthy)$
-    val mongoConfig = config.loadUnsafe[MongoConfig]("application.persistence.mongodb")
-    $endif$
-
-    $if(useMongo.truthy)$
-    val persistenceModule = new PersistenceModule(mongoConfig)
-    $else$
-    val persistenceModule = new PersistenceModule()
-    $endif$
-
-    logger.info(s"Application trying to bind to host [\$host:\$port]")
-
-    Http(context.system).bindAndHandle(endpoints.routes, host, port)
-      .map { _ => logger.info(s"Application bound to [\$host:\$port]") }
-      .onComplete {
-        case Failure(_) =>
-          logger.info(s"Failed to bind to [\$host:\$port]")
-          context.system.terminate()
-
-        case _ =>
-      }
-  }
-
-  case class ServerSettings(host: String, port: Int)
-
-}
-
-final class Terminator(appLoaderProps: Props) extends Actor with LazyLogging {
-
-  context.actorOf(appLoaderProps, "app-loader")
-
-  override def supervisorStrategy: SupervisorStrategy = {
-    OneForOneStrategy() {
-      case error =>
-        logger.error(s"Application loading error [\${error.getMessage}]", error)
-        context.system.terminate()
-        Stop
+    val onCancel: Task[Unit] = {
+      for {
+        _ <- Task(logger.error("Application initialization was cancelled"))
+        _ <- Task.fromFuture(system.terminate())
+      } yield ()
     }
-  }
 
-  override def receive: Receive = Actor.emptyBehavior
+    def onSuccess(result: Either[BaseError, Unit]): Task[Unit] = result match {
+      case Right(()) =>
+        for {
+          _ <- Task(logger.info("Application stopped without any error"))
+          _ <- Task.fromFuture(system.terminate())
+        } yield ()
+
+      case Left(error) =>
+        for {
+          _ <- Task(logger.error(log"Error during application initialization. \$error"))
+          _ <- Task.fromFuture(system.terminate())
+        } yield ()
+    }
+
+    def onError(unhandledError: Throwable): Task[Unit] = {
+      for {
+        _ <- Task(logger.error(log"Error during application initialization. \$unhandledError", unhandledError))
+        _ <- Task.fromFuture(system.terminate())
+      } yield ()
+    }
+
+    val initializationFlow = for {
+      _ <- defer(logger.info("Starting the \$name\$ service"))
+
+      modules <- applicationLoader.loadModules()
+
+      apiConfig = modules.apiModule.config
+
+      _ = logger.info(log"Application trying to bind to host [\${apiConfig.host}:\${apiConfig.port}]")
+
+      _ <- deferFuture(Http(system).bindAndHandle(modules.apiModule.routes, apiConfig.host.value, apiConfig.port.value))
+
+      _ = logger.info(log"Application bound to [\${apiConfig.host}:\${apiConfig.port}]")
+    } yield ()
+
+    initializationFlow
+      .value
+      .doOnCancel(onCancel)
+      .transformWith(onSuccess, onError)
+      .runAsync
+
+    ()
+  }
 
 }

@@ -30,21 +30,29 @@ lazy val commonSettings = Seq(
 
   scalacOptions ++= commonOptions ++ warnOptions ++ lintOptions,
 
-  resolvers ++= Seq(Resolver.mavenLocal, Resolver.sbtPluginRepo("releases"))
+  resolvers ++= Seq(Resolver.mavenLocal, Resolver.sbtPluginRepo("releases")),
+
+  addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
 )
 
 lazy val testSettings = Seq(
   fork in Test := true,
 
-  parallelExecution in Test := true
+  parallelExecution in Test := true,
+
+  javaOptions in Test := Seq(
+    "-Dorg.mongodb.async.type=netty"
+  )
 )
 
 $if(useMongo.truthy)$
 lazy val itEnvironment = {
+  import scala.sys.process._
   val startMongo = TaskKey[Unit]("start-mongo", "Start a local MongoDB instance")
 
   Seq(
     (startMongo in IntegrationTest) := {
+      "docker rm -f $name_normalized$-it-mongo-instance".!
       "docker run -d -p 53123:27017 --name $name_normalized$-it-mongo-instance mongo".!
     },
 
@@ -54,8 +62,11 @@ lazy val itEnvironment = {
       }
     }.value,
 
+    fork in IntegrationTest := true,
+
     javaOptions in IntegrationTest := Seq(
-      "-DMONGODB_URL=mongodb://localhost:53123/"
+      "-DMONGODB_URL=mongodb://localhost:53123/",
+      "-Dorg.mongodb.async.type=netty"
     )
   )
 }
@@ -112,10 +123,11 @@ lazy val dockerSettings = Seq(
 )
 
 lazy val devDockerSettings = {
-  val dev = Configurations.config("dev")
+  import scala.sys.process._
+  val Dev = Configurations.config("dev")
 
   Seq(
-    docker in dev := {
+    docker in Dev := {
       val log = Keys.streams.value.log
       val dockerPath = (DockerKeys.dockerPath in docker).value
       val buildOptions = (DockerKeys.buildOptions in docker).value
@@ -125,7 +137,7 @@ lazy val devDockerSettings = {
         // Sets a tag that contains the current commit hash
         ImageName(
           repository = name.value,
-          tag = Some(version.value + "-" + Process("git rev-parse HEAD").lines.head)
+          tag = Some(version.value + "-" + "git rev-parse HEAD".!!)
         )
       )
       sbtdocker.DockerBuild(dockerfile, DefaultDockerfileProcessor, imageNames, buildOptions, stageDir, dockerPath, log)
