@@ -10,9 +10,6 @@ import $organization$.util.logging.{Logging, TraceId}
 import monix.eval.Task
 import monix.execution.Scheduler
 
-/**
-  * @author Maksim Ochenashko
-  */
 object Server extends Logging {
 
   def main(args: Array[String]): Unit = {

@@ -3,9 +3,6 @@ package $organization$.util
 import java.time.format.DateTimeFormatter
 import java.time.{ZoneOffset, ZonedDateTime}
 
-/**
-  * @author Maksim Ochenashko
-  */
 object TimeUtils {
 
   val DefaultZone: ZoneOffset = ZoneOffset.UTC
