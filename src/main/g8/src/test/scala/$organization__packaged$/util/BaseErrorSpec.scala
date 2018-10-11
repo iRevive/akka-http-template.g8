@@ -44,7 +44,7 @@ class BaseErrorSpec extends BaseSpec {
       val error = TestThrowableError(exception)
 
       val expectedMessage = "RuntimeException(something went wrong)"
-      val expectedPosition = "com.example.util.BaseErrorSpec#error:44"
+      val expectedPosition = "$organization$.util.BaseErrorSpec#error:44"
 
       val expectedToString = "TestThrowableError(" +
         s"message = \$expectedMessage, " +
