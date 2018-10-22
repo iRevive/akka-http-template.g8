@@ -12,7 +12,7 @@ trait ProcessingModuleLoader extends Logging {
                           (implicit traceId: TraceId): ResultT[ProcessingModule] = {
     for {
       _ <- unit()
-    } yield ProcessingModule()
+    } yield new ProcessingModule()
   }
 
 }

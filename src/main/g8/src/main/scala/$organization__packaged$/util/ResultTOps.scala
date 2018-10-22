@@ -11,25 +11,25 @@ trait ResultTOps {
 
   @inline
   final def unit(): ResultT[Unit] =
-    defer(())
+    eval(())
 
   @inline
   final def leftT[A](value: => BaseError): ResultT[A] =
-    deferEither(Left(value))
+    evalEither(Left(value))
 
   @inline
-  def defer[A](value: => A): ResultT[A] =
-    deferEither(Right(value))
+  def eval[A](value: => A): ResultT[A] =
+    evalEither(Right(value))
 
   @inline
-  def deferFuture[A](value: => Future[A], errorWrapper: Throwable => ThrowableError = ThrowableError.apply)
-                    (implicit pos: Position): ResultT[A] = {
+  def deferFuture[A](value: => Future[A], errorWrapper: Throwable => ThrowableError = ThrowableError.apply)(
+      implicit pos: Position): ResultT[A] = {
     deferTask(Task.deferFuture(value).asyncBoundary, errorWrapper)
   }
 
   @inline
-  def deferTask[A](value: => Task[A], errorWrapper: Throwable => ThrowableError = ThrowableError.apply)
-                  (implicit pos: Position): ResultT[A] = {
+  def deferTask[A](value: => Task[A], errorWrapper: Throwable => ThrowableError = ThrowableError.apply)(
+      implicit pos: Position): ResultT[A] = {
     safe(value).flatMapF { task =>
       task
         .map[Either[BaseError, A]](Right.apply)
@@ -43,10 +43,10 @@ trait ResultTOps {
 
   @inline
   def safe[A](value: => A, errorWrapper: Throwable => ThrowableError): ResultT[A] =
-    deferEither(Either.catchNonFatal(value).leftMap(errorWrapper))
+    evalEither(Either.catchNonFatal(value).leftMap(errorWrapper))
 
   @inline
-  def deferEither[E <: BaseError, A](value: => Either[E, A]): ResultT[A] =
+  def evalEither[E <: BaseError, A](value: => Either[E, A]): ResultT[A] =
     EitherT(Task.eval[Either[BaseError, A]](value))
 
 }

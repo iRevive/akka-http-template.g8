@@ -2,7 +2,7 @@ package $organization$.util
 
 import sourcecode.Enclosing
 
-case class Position(enclosing: sourcecode.Enclosing, line: sourcecode.Line) {
+final case class Position(enclosing: sourcecode.Enclosing, line: sourcecode.Line) {
   def fullPosition: String = s"\${enclosing.value}:\${line.value}"
 }
 

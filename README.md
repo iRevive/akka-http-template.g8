@@ -49,12 +49,7 @@ sbt clean test it:test run
 ## SBT plugins
 
 #### [sbt-release](https://github.com/sbt/sbt-release)
-The plugin configured without `publishArtifact` step. By default, it will publish a docker image locally. 
-
-#### [sbt-docker](https://github.com/marcuslonnberg/sbt-docker)
-Docker step integrated into release process.   
-During a release, the plugin will publish two images with two versions: `latest` and `current version` of the project.  
-You can publish the git-hash-based version using `sbt dev:docker`. 
+The plugin configured without `publishArtifact` step. By default, it will publish a docker image locally.  
 
 #### [sbt-native-packager](https://github.com/sbt/sbt-native-packager)
 Almost default configuration.

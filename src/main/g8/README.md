@@ -14,10 +14,9 @@ with the project and is constantly a subject for changes.
 >   - [Configuration details](#configuration-details)  
 > - [Tests execution](#tests-execution)  
 >   - [How to run tests](#how-to-run-tests)  
-$if(useMongo.truthy)$>   - [How to run integration tests](#how-to-run-integration-tests)  $endif$
+>   - [How to run integration tests](#how-to-run-integration-tests)  
 >   - [How to calculate test coverage](#how-to-calculate-test-coverage)  
 > - [Docker configuration](#docker-configuration)  
->   - [How to create a dev docker image](#how-to-create-a-dev-docker-image)  
 >   - [How to create a latest docker image](#how-to-create-a-latest-docker-image)  
 >   - [How to run a dockerized application](#how-to-run-a-dockerized-application)  
 > - [Deploy](#deploy)  
@@ -66,42 +65,33 @@ By default, application is listening on port 9001.
 
 #### <a name="how-to-run-tests"></a> How to run tests
 In a `<root>` project directory write in a console  
-```scala
+```
 sbt test
 ```
 
-$if(useMongo.truthy)$
 #### <a name="how-to-run-integration-tests"></a> How to run integration tests
 **Note** You should have installed docker.
 In a `<root>` project directory write in a console  
-```scala
+```
 sbt it:test
 ```
-$endif$
 
 #### <a name="how-to-calculate-test-coverage"></a> How to calculate coverage
-```sbtshell
-sbt 'set coverageEnabled := true' clean coverage test $if(useMongo.truthy)$it:test $endif$coverageReport
+```
+sbt 'set coverageEnabled := true' clean coverage test it:test coverageReport
 ```
 
-Coverage reports will be in `target/scoverage-report`. There are HTML and XML reports. The XML is useful if you need to programatically use the results, or if you're writing a tool.  
+Coverage reports will be in `target/scala-2.12/scoverage-report`. There are HTML and XML reports. The XML is useful if you need to programatically use the results, or if you're writing a tool.  
  
  
  
 ## <a name="docker-configuration"></a> Docker configuration 
 
-#### <a name="how-to-create-a-dev-docker-image"></a> How to create a dev docker image
-SBT will publish an image locally using a name based on a git hash.  
-Execute in a `<root>` project folder:  
-```sbtshell
-sbt dev:docker
-```
-
 #### <a name="how-to-create-a-latest-docker-image"></a> How to create a latest docker image
 SBT will publish an image locally using 'latest' tag.  
 Execute in a `<root>` project folder:  
-```sbtshell
-sbt docker
+```
+sbt docker:publishLocal
 ```
 
 #### <a name="how-to-run-a-dockerized-application"></a> How to run a dockerized application
@@ -116,7 +106,7 @@ docker-compose up
 
 #### <a name="how-to-make-a-package"></a> How to build a standalone application
 In a `<root>` project folder write in a console  
-```sbtshell
+```
 sbt universal:packageBin
 ```
 
@@ -128,14 +118,14 @@ The output file will be located at this place:
 #### <a name="how-to-run-an-application"></a> How to run an application
 Unzip an `$name_normalized$.zip` archive in any directory (`<root>/dist`, for example).    
 Execute in a `<root>/dist/$name_normalized$` folder:    
-```sbtshell
+```
 sh bin/$name_normalized$
 ```
 
 #### <a name="how-to-release-a-version"></a> How to release a version
 The docker version (latest + release version) will be published as well.  
 Execute in a `<root>` project folder:  
-```sbtshell
+```
 sbt "release with-defaults"
 ```
 
@@ -144,7 +134,7 @@ $if(useNginx.truthy)$
 
 #### <a name="how-to-create-ssl-certificates"></a> How to create self-signed SSL certificates for Nginx
 Execute in a `<root>/docker/nginx` project folder and follow commands:  
-```sbtshell
+```
 sh gen-cert.sh
 ```
 

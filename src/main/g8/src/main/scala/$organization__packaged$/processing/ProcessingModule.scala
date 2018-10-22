@@ -1,3 +1,3 @@
 package $organization$.processing
 
-case class ProcessingModule()
+final class ProcessingModule()

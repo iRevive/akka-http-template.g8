@@ -36,7 +36,7 @@ object ThrowableError {
 
   implicit val throwableErrorLoggable: Loggable[ThrowableError] = Loggable.instance { error =>
     val rawClassName = ClassUtils.getClassSimpleName(error.getClass)
-    val className = if (rawClassName.contains("anon")) "ThrowableError" else rawClassName
+    val className    = if (rawClassName.contains("anon")) "ThrowableError" else rawClassName
     s"\$className(message = \${error.message}, cause = \${error.cause}, pos = \${error.pos.fullPosition})"
   }
 

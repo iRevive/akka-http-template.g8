@@ -42,22 +42,20 @@ class TaskUtilsSpec extends WordSpec with Matchers {
       "re-execute task required amount of retries" in {
         var inc = 0
 
-        val exception = new Exception("It's not working")
-
         val task = Task {
           inc = inc + 1
-          throw exception
+          throw new Exception("It's not working")
         }
 
-        val timeoutError = Task.raiseError[Unit](
-          new TimeoutException("Timeout exception")
-        )
+        val timeoutException = new TimeoutException("Timeout exception")
+        val timeoutError     = Task.raiseError[Unit](timeoutException)
 
-        val retryPolicy = RetryPolicy(5, 10.millis, 100.millis)
+        val retryPolicy = RetryPolicy(5, 30.millis, 1000.millis)
 
-        val error = intercept[Exception](TaskUtils.retry("retry spec", task, retryPolicy, timeoutError).runSyncUnsafe(500.millis))
+        val error =
+          intercept[Exception](TaskUtils.retry("retry spec", task, retryPolicy, timeoutError).runSyncUnsafe(1050.millis))
 
-        error shouldBe exception
+        error shouldBe timeoutException
         inc shouldBe 6
       }
 

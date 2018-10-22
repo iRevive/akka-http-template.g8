@@ -1,11 +1,10 @@
 package $organization$.persistence.mongo
 
-$if(useMongo.truthy)$
 import cats.data.EitherT
 import $organization$.persistence.mongo.MongoError.UnhandledMongoError
 import $organization$.persistence.mongo.bson.{BsonDecoder, BsonEncoder}
 import $organization$.util.ResultT
-import $organization$.util.ResultT.{deferEither, deferFuture}
+import $organization$.util.ResultT.{evalEither, deferFuture}
 import $organization$.util.BaseError
 import eu.timepit.refined.types.string.NonEmptyString
 import monix.eval.Task
@@ -40,7 +39,7 @@ class MongoRepository[Obj: BsonEncoder : BsonDecoder](database: MongoDatabase, c
         UnhandledMongoError.apply
       )
 
-      decoded <- deferEither(BsonDecoder.decodeOption[Obj](doc))
+      decoded <- evalEither(BsonDecoder.decodeOption[Obj](doc))
     } yield decoded
   }
 
@@ -48,7 +47,7 @@ class MongoRepository[Obj: BsonEncoder : BsonDecoder](database: MongoDatabase, c
     for {
       c <- collection
       result <- deferFuture(c.find[BsonDocument](query).headOption(), UnhandledMongoError.apply)
-      decoded <- deferEither(BsonDecoder.decodeOption[Obj](result))
+      decoded <- evalEither(BsonDecoder.decodeOption[Obj](result))
     } yield decoded
   }
 
@@ -56,7 +55,7 @@ class MongoRepository[Obj: BsonEncoder : BsonDecoder](database: MongoDatabase, c
     for {
       c <- collection
       result <- deferFuture(c.find[BsonDocument](query).toFuture(), UnhandledMongoError.apply)
-      decoded <- deferEither(BsonDecoder.decodeList[Obj](result))
+      decoded <- evalEither(BsonDecoder.decodeList[Obj](result))
     } yield decoded
   }
 
@@ -76,4 +75,3 @@ class MongoRepository[Obj: BsonEncoder : BsonDecoder](database: MongoDatabase, c
   }
 
 }
-$endif$

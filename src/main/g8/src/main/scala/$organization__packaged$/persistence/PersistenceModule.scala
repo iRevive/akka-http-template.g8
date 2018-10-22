@@ -5,7 +5,7 @@ import org.mongodb.scala.MongoDatabase
 $endif$
 
 $if(useMongo.truthy)$
-case class PersistenceModule(mongoDatabase: MongoDatabase)
+final class PersistenceModule(val mongoDatabase: MongoDatabase)
 $else$
-case class PersistenceModule()
+final class PersistenceModule()
 $endif$

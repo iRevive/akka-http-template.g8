@@ -1,13 +1,11 @@
 package $organization$.persistence.mongo
 
 import $organization$.it.ITSpec
+import org.mongodb.scala.bson.BsonDocument
+import org.mongodb.scala.model.Filters.{equal => eQual}
+import scala.util.Random
 
 class MongoRepositorySpec extends ITSpec {
-
-  $if(useMongo.truthy)$
-  import org.mongodb.scala.bson.BsonDocument
-  import org.mongodb.scala.model.Filters.{equal => eQual}
-  import scala.util.Random
 
   "MongoRepository" should {
 
@@ -28,6 +26,5 @@ class MongoRepositorySpec extends ITSpec {
     }
 
   }
-  $endif$
 
 }

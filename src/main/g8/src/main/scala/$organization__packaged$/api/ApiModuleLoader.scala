@@ -1,7 +1,7 @@
 package $organization$.api
 
 import $organization$.util.ResultT
-import $organization$.util.ResultT.deferEither
+import $organization$.util.ResultT.evalEither
 import $organization$.util.config.ConfigOps._
 import $organization$.util.logging.Loggable.InterpolatorOps._
 import $organization$.util.logging.{Logging, TraceId}
@@ -11,12 +11,12 @@ trait ApiModuleLoader extends Logging {
 
   def loadApiModule(rootConfig: Config)(implicit traceId: TraceId): ResultT[ApiModule] = {
     for {
-      apiConfig <- deferEither(rootConfig.load[ApiConfig]("application.api"))
+      apiConfig <- evalEither(rootConfig.load[ApiConfig]("application.api"))
 
       _ = logger.info(log"Loading API module with config \$apiConfig")
 
       endpoints = new Endpoints()
-    } yield ApiModule(endpoints.routes, apiConfig)
+    } yield new ApiModule(endpoints.routes, apiConfig)
   }
 
 }

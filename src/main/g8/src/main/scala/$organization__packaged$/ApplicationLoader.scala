@@ -12,22 +12,19 @@ trait ApplicationLoader extends Logging {
 
   import ApplicationLoader._
 
-  def loadModules()(implicit traceId: TraceId): ResultT[ApplicationModules] = {
+  def loadApplication()(implicit traceId: TraceId): ResultT[Application] = {
     for {
-      config <- loadConfig()
-
+      config            <- loadConfig()
       persistenceModule <- persistenceModuleLoader.loadPersistenceModule(config)
+      processingModule  <- processingModuleLoader.loadProcessingModule(config, persistenceModule)
+      apiModule         <- apiModuleLoader.loadApiModule(config)
 
-      processingModule <- processingModuleLoader.loadProcessingModule(config, persistenceModule)
-
-      apiModule <- apiModuleLoader.loadApiModule(config)
-
-      applicationModules = ApplicationModules(
+      application = new Application(
         persistenceModule = persistenceModule,
         processingModule = processingModule,
         apiModule = apiModule
       )
-    } yield applicationModules
+    } yield application
   }
 
   protected def loadConfig(): ResultT[Config] = safe(ConfigFactory.load())
@@ -44,8 +41,10 @@ object ApplicationLoader {
 
   object Default extends ApplicationLoader
 
-  case class ApplicationModules(persistenceModule: PersistenceModule,
-                                processingModule: ProcessingModule,
-                                apiModule: ApiModule)
+  final class Application(
+      val persistenceModule: PersistenceModule,
+      val processingModule: ProcessingModule,
+      val apiModule: ApiModule
+  )
 
 }

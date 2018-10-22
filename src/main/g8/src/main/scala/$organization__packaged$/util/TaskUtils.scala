@@ -7,8 +7,8 @@ import monix.eval.Task
 
 object TaskUtils extends Logging {
 
-  def retry[A](name: String, task: Task[A], retryPolicy: RetryPolicy, onTimeout: Task[A])
-              (implicit traceId: TraceId): Task[A] = {
+  def retry[A](name: String, task: Task[A], retryPolicy: RetryPolicy, onTimeout: Task[A])(
+      implicit traceId: TraceId): Task[A] = {
     task
       .onErrorRecoverWith {
         case error if retryPolicy.retries.value > 0 =>
@@ -24,7 +24,8 @@ object TaskUtils extends Logging {
             .delayExecution(retryPolicy.delay)
 
         case error =>
-          Task.raiseError(error)
+          logger.error(log"[\$name] Retry policy. Zero retries left. Error \$error", error)
+          onTimeout
       }
       .timeoutTo(retryPolicy.timeout, onTimeout)
   }

@@ -10,7 +10,7 @@ import $organization$.util.config.ConfigOps._
 import $organization$.util.logging.{Logging, TraceId}
 import $organization$.util.logging.Loggable.InterpolatorOps._
 import $organization$.util.TaskUtils
-import $organization$.util.ResultT.deferEither
+import $organization$.util.ResultT.{evalEither, deferTask}
 import monix.eval.Task
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
@@ -29,8 +29,8 @@ trait PersistenceModuleLoader extends Logging {
   $if(useMongo.truthy)$
   def loadPersistenceModule(rootConfig: Config)(implicit traceId: TraceId): ResultT[PersistenceModule] = {
     for {
-      mongoDatabase <- loadMongoModule(rootConfig)
-    } yield PersistenceModule(mongoDatabase = mongoDatabase)
+      mongoDatabase <- loadMongoDatabase(rootConfig)
+    } yield new PersistenceModule(mongoDatabase)
   }
   $else$
   def loadPersistenceModule(rootConfig: Config)(implicit traceId: TraceId): ResultT[PersistenceModule] = {
@@ -38,15 +38,15 @@ trait PersistenceModuleLoader extends Logging {
 
     for {
       _ <- unit()
-    } yield PersistenceModule()
+    } yield new PersistenceModule()
   }
   $endif$
 
 
   $if(useMongo.truthy)$
-  protected def loadMongoModule(rootConfig: Config)(implicit traceId: TraceId): ResultT[MongoDatabase] = {
+  private[persistence] def loadMongoDatabase(rootConfig: Config)(implicit traceId: TraceId): ResultT[MongoDatabase] = {
     for {
-      mongoConfig <- deferEither(rootConfig.load[MongoConfig]("application.persistence.mongodb"))
+      mongoConfig <- evalEither(rootConfig.load[MongoConfig]("application.persistence.mongodb"))
 
       _ = logger.info(log"Loading mongo module with config \$mongoConfig")
 
@@ -54,10 +54,7 @@ trait PersistenceModuleLoader extends Logging {
     } yield db
   }
 
-  protected def initializeMongoDatabase(mongoConfig: MongoConfig)(implicit traceId: TraceId): ResultT[MongoDatabase] = {
-    import $organization$.util.ResultT.deferTask
-    import $organization$.util.logging.Loggable.InterpolatorOps._
-
+  protected def initializeMongoDatabase(config: MongoConfig)(implicit traceId: TraceId): ResultT[MongoDatabase] = {
     def closeClientOnError[A](client: MongoClient, task: Task[A]): Task[A] = {
       task
         .doOnCancel(Task.eval(client.close()))
@@ -68,36 +65,40 @@ trait PersistenceModuleLoader extends Logging {
     }
 
     val dbAsync = for {
-      _ <- Task.eval(logger.info(log"Loading MongoDB module with config \$mongoConfig"))
+      _ <- Task.eval(logger.info(log"Loading MongoDB module with config \$config"))
 
-      client <- Task.eval(MongoClient(mongoConfig.url.value))
+      client <- Task.eval(MongoClient(config.url.value))
 
-      db <- closeClientOnError(client, Task.eval(client.getDatabase(mongoConfig.database.value).withCodecRegistry(DEFAULT_CODEC_REGISTRY)))
+      db <- closeClientOnError(
+        client,
+        Task.eval(client.getDatabase(config.database.value).withCodecRegistry(DEFAULT_CODEC_REGISTRY))
+      )
+
+      timeoutError = Task.raiseError[String](
+        new TimeoutException(log"Cannot acquire MongoDB connection in [\${config.retryPolicy.timeout}]")
+      )
 
       _ = logger.info("Acquiring MongoDB connection")
 
-      _ <- closeClientOnError(client, acquireMongoConnection(db, mongoConfig))
+      _ <- closeClientOnError(
+        client,
+        TaskUtils.retry("Acquire MongoDB connection", mongoConnectionAttempt(db, config), config.retryPolicy, timeoutError)
+      )
     } yield db
 
     deferTask(dbAsync, UnhandledMongoError.apply)
   }
 
-  protected def acquireMongoConnection(db: MongoDatabase, mongoConfig: MongoConfig)(implicit traceId: TraceId): Task[Unit] = {
-    import $organization$.util.logging.Loggable.InterpolatorOps._
-    import scala.concurrent.duration._
-
-    val connectionAttempt = Task
-      .deferFuture(db.runCommand(BsonDocument("connectionStatus" -> 1)).toFutureOption())
-      .asyncBoundary
-      .timeoutTo(500.millis, Task.raiseError(new TimeoutException("Cannot acquire MongoDB connection in 500 millis")))
-
-    val timeoutError = Task.raiseError[String](
-      new TimeoutException(log"Cannot acquire MongoDB connection in [\${mongoConfig.retryPolicy.timeout}]")
+  private[persistence] def mongoConnectionAttempt(db: MongoDatabase, config: MongoConfig): Task[Unit] = {
+    val timeoutTo = Task.raiseError(
+      new TimeoutException(log"Failed attempt to acquire MongoDB connection in [\${config.connectionAttemptTimeout}]")
     )
 
-    for {
-      _ <- TaskUtils.retry("Acquire MongoDB connection", connectionAttempt, mongoConfig.retryPolicy, timeoutError)
-    } yield ()
+    Task
+      .deferFuture(db.runCommand(BsonDocument("connectionStatus" -> 1)).toFutureOption())
+      .asyncBoundary
+      .map(_ => ())
+      .timeoutTo(config.connectionAttemptTimeout, timeoutTo)
   }
   $endif$
 

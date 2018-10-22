@@ -1,21 +1,20 @@
 import sbt.Keys.javaOptions
-import sbtdocker.staging.DefaultDockerfileProcessor
 import sbtrelease.ReleaseStateTransformations._
 
 lazy val root = (project in file("."))
-  .enablePlugins(sbtdocker.DockerPlugin, JavaAppPackaging, AshScriptPlugin)
-  $if(useMongo.truthy)$
+  .enablePlugins(JavaAppPackaging, AshScriptPlugin)
   .configs(IntegrationTest)
-  .settings(Defaults.itSettings: _*)
-  .settings(itEnvironment: _*)
+  .settings(Defaults.itSettings)
+  .settings(inConfig(IntegrationTest)(ScalafmtPlugin.scalafmtConfigSettings))
+  $if(useMongo.truthy)$
+  .settings(itEnvironment)
   $endif$
-  .settings(commonSettings: _*)
-  .settings(testSettings: _*)
-  .settings(scoverageSettings: _*)
-  .settings(buildSettings: _*)
-  .settings(dockerSettings: _*)
-  .settings(devDockerSettings: _*)
-  .settings(releaseSettings: _*)
+  .settings(commonSettings)
+  .settings(testSettings)
+  .settings(buildSettings)
+  .settings(dockerSettings)
+  .settings(releaseSettings)
+  .settings(commandSettings)
   .settings(
     name := Settings.name,
     libraryDependencies ++= Dependencies.root
@@ -23,23 +22,16 @@ lazy val root = (project in file("."))
 
 lazy val commonSettings = Seq(
   organization := Settings.organization,
-
   name := Settings.name,
-
   scalaVersion := Versions.scala,
-
   scalacOptions ++= commonOptions ++ warnOptions ++ lintOptions,
-
   resolvers ++= Seq(Resolver.mavenLocal, Resolver.sbtPluginRepo("releases")),
-
   addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
 )
 
 lazy val testSettings = Seq(
   fork in Test := true,
-
   parallelExecution in Test := true,
-
   javaOptions in Test := Seq(
     "-Dorg.mongodb.async.type=netty"
   )
@@ -52,13 +44,13 @@ lazy val itEnvironment = {
 
   Seq(
     (startMongo in IntegrationTest) := {
-      "docker rm -f $name_normalized$-it-mongo-instance".!
-      "docker run -d -p 53123:27017 --name $name_normalized$-it-mongo-instance mongo".!
+      "docker rm -f $name_normalized$-it-mongo".!
+      "docker run -d -p 53123:27017 --name $name_normalized$-it-mongo mongo".!
     },
 
     (test in IntegrationTest) := {
       (test in IntegrationTest).dependsOn(startMongo in IntegrationTest).andFinally {
-        "docker rm -f $name_normalized$-it-mongo-instance".!
+        "docker rm -f $name_normalized$-it-mongo".!
       }
     }.value,
 
@@ -72,89 +64,34 @@ lazy val itEnvironment = {
 }
 $endif$
 
-lazy val scoverageSettings = Seq(
-  coverageEnabled := false
-)
-
 lazy val buildSettings = Seq(
   packageName in Universal := name.value,
+  mainClass in Compile := Some("$organization$.Server"),
+  sources in (Compile, doc) := Seq.empty,
+  publishArtifact in (Compile, packageDoc) := false,
 
   mappings in Universal += {
     val conf = (resourceDirectory in Compile).value / "application.conf"
     conf -> "conf/application.conf"
   },
 
-  mainClass in Compile := Some("$organization$.Server"),
-
   bashScriptExtraDefines += """addJava "-Dconfig.file=\${app_home}/../conf/application.conf""""
 )
 
 lazy val dockerSettings = Seq(
   dockerBaseImage := "openjdk:8-alpine",
-
-  buildOptions in docker := BuildOptions(
-    removeIntermediateContainers = BuildOptions.Remove.Always,
-    pullBaseImage = BuildOptions.Pull.IfMissing
-  ),
-
-  imageNames in docker := Seq(
-    // Sets the latest tag
-    ImageName(
-      repository = name.value,
-      tag = Some("latest")
-    ),
-    // Sets a tag that contains the project version
-    ImageName(
-      repository = name.value,
-      tag = Some(version.value)
-    )
-  ),
-
-  dockerfile in docker := {
-    val appDir: File = stage.value
-    val targetDir = "/app"
-
-    new Dockerfile {
-      from("openjdk:8-alpine")
-      entryPoint(s"\$targetDir/bin/\${executableScriptName.value}")
-      copy(appDir, targetDir, chown = "daemon:daemon")
-    }
-  }
+  dockerUpdateLatest := true
 )
-
-lazy val devDockerSettings = {
-  import scala.sys.process._
-  val Dev = Configurations.config("dev")
-
-  Seq(
-    docker in Dev := {
-      val log = Keys.streams.value.log
-      val dockerPath = (DockerKeys.dockerPath in docker).value
-      val buildOptions = (DockerKeys.buildOptions in docker).value
-      val stageDir = (target in docker).value
-      val dockerfile = (DockerKeys.dockerfile in docker).value
-      val imageNames = Seq(
-        // Sets a tag that contains the current commit hash
-        ImageName(
-          repository = name.value,
-          tag = Some(version.value + "-" + "git rev-parse HEAD".!!)
-        )
-      )
-      sbtdocker.DockerBuild(dockerfile, DefaultDockerfileProcessor, imageNames, buildOptions, stageDir, dockerPath, log)
-    }
-  )
-}
 
 lazy val releaseSettings = Seq(
   releaseVersionBump := sbtrelease.Version.Bump.Next,
-
   releaseProcess := Seq[ReleaseStep](
     checkSnapshotDependencies,
     inquireVersions,
     runTest,
     releaseStepTask(test in IntegrationTest),
     setReleaseVersion,
-    releaseStepTask(docker in docker),
+    releaseStepTask(publish in Docker),
     commitReleaseVersion,
     tagRelease,
     setNextVersion,
@@ -162,6 +99,11 @@ lazy val releaseSettings = Seq(
     pushChanges
   )
 )
+
+lazy val commandSettings = Seq(
+  addCommandAlias("scalafmtAll", ";scalafmt;test:scalafmt;it:scalafmt"),
+  addCommandAlias("testAll", ";set coverageEnabled := true;clean;coverage;test;it:test;coverageReport")
+).flatten
 
 lazy val commonOptions = Seq(
   "-deprecation",                      // Emit warning and location for usages of deprecated APIs.

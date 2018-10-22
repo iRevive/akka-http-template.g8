@@ -1,6 +1,5 @@
 package $organization$.persistence.mongo.bson
 
-$if(useMongo.truthy)$
 import java.time._
 
 import $organization$.util.TimeUtils
@@ -106,4 +105,3 @@ object BsonEncoderDerivation {
   implicit def derive[T]: Typeclass[T] = macro Magnolia.gen[T]
 
 }
-$endif$

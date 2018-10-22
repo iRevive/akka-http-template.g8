@@ -26,33 +26,33 @@ class ResultTOpsSpec extends BaseSpec {
 
     }
 
-    "#defer" in new resultMatcher[String, String] {
+    "#eval" in new resultMatcher[String, String] {
 
       override def delayedValue: String = "213"
 
       override def matcher(v: Either[BaseError, String]): Assertion = v shouldBe Right(delayedValue)
 
-      override def method(v: => String): ResultT[String] = defer(v)
+      override def method(v: => String): ResultT[String] = eval(v)
 
     }
 
-    "#deferEither(Left)" in new resultMatcher[BaseError, String] {
+    "#evalEither(Left)" in new resultMatcher[BaseError, String] {
 
       override lazy val delayedValue: BaseError = ThrowableError(new RuntimeException("my error"))
 
       override def matcher(v: Either[BaseError, String]): Assertion = v shouldBe Left(delayedValue)
 
-      override def method(v: => BaseError): ResultT[String] = deferEither(Left(v))
+      override def method(v: => BaseError): ResultT[String] = evalEither(Left(v))
 
     }
 
-    "#deferEither(Right)" in new resultMatcher[String, String] {
+    "#evalEither(Right)" in new resultMatcher[String, String] {
 
       override def delayedValue: String = "213"
 
       override def matcher(v: Either[BaseError, String]): Assertion = v shouldBe Right(delayedValue)
 
-      override def method(v: => String): ResultT[String] = deferEither(Right(v))
+      override def method(v: => String): ResultT[String] = evalEither(Right(v))
 
     }
 
