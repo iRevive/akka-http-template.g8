@@ -6,9 +6,9 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.http.scaladsl.unmarshalling.Unmarshaller._
 import org.scalatest._
 
-class EndpointsSpec extends WordSpec with Matchers with ScalatestRouteTest {
+class GeneralApiSpec extends WordSpec with Matchers with ScalatestRouteTest {
 
-  "The service" should {
+  "General API" should {
 
     "return 'I'm alive' from api/health endpoint" in {
       Get("/api/health") ~> Route.seal(routes) ~> check {
@@ -19,6 +19,6 @@ class EndpointsSpec extends WordSpec with Matchers with ScalatestRouteTest {
 
   }
 
-  private lazy val routes: Route = new Endpoints().routes
+  private lazy val routes: Route = new GeneralApi().routes
 
 }

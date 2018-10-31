@@ -41,8 +41,8 @@ final class RichConfig(private val config: Config) extends AnyVal {
 
 }
 
-case class ConfigParsingError(path: String, expectedClass: String, error: Error)(implicit val pos: Position)
-  extends BaseError {
+final case class ConfigParsingError(path: String, expectedClass: String, error: Error)(implicit val pos: Position)
+    extends BaseError {
 
   override def message: String = log"Couldn't load [\$expectedClass] at path [\$path]. Error [\${error.getMessage}]"
 

@@ -15,9 +15,9 @@ trait ApplicationLoader extends Logging {
   def loadApplication()(implicit traceId: TraceId): ResultT[Application] = {
     for {
       config            <- loadConfig()
-      persistenceModule <- persistenceModuleLoader.loadPersistenceModule(config)
-      processingModule  <- processingModuleLoader.loadProcessingModule(config, persistenceModule)
-      apiModule         <- apiModuleLoader.loadApiModule(config)
+      persistenceModule <- persistenceModuleLoader(config).loadPersistenceModule()
+      processingModule  <- processingModuleLoader(config, persistenceModule).loadProcessingModule()
+      apiModule         <- apiModuleLoader(config).loadApiModule()
 
       application = new Application(
         persistenceModule = persistenceModule,
@@ -29,11 +29,17 @@ trait ApplicationLoader extends Logging {
 
   protected def loadConfig(): ResultT[Config] = safe(ConfigFactory.load())
 
-  protected def persistenceModuleLoader: PersistenceModuleLoader = PersistenceModuleLoader.Default
+  protected def persistenceModuleLoader(config: Config): PersistenceModuleLoader = {
+    new PersistenceModuleLoader(config)
+  }
 
-  protected def apiModuleLoader: ApiModuleLoader = ApiModuleLoader.Default
+  protected def apiModuleLoader(config: Config): ApiModuleLoader = {
+    new ApiModuleLoader(config)
+  }
 
-  protected def processingModuleLoader: ProcessingModuleLoader = ProcessingModuleLoader.Default
+  protected def processingModuleLoader(config: Config, persistenceModule: PersistenceModule): ProcessingModuleLoader = {
+    new ProcessingModuleLoader(config, persistenceModule)
+  }
 
 }
 

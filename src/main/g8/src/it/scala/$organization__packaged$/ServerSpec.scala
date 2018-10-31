@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import $organization$.it.ITSpec
 import $organization$.util.ResultT
-import $organization$.util.ResultT.eval
+import $organization$.util.ResultT.{deferFuture, eval}
 import com.typesafe.config.{Config, ConfigFactory}
 
 class ServerSpec extends ITSpec {
@@ -21,10 +21,21 @@ class ServerSpec extends ITSpec {
       val error = intercept[Exception](Server.startApp(loader).runSyncUnsafe(DefaultTimeout))
 
       $if(useMongo.truthy)$
-      error.getMessage shouldBe "Couldn't load [MongoConfig] at path [application.persistence.mongodb]. Error [Path not found in config]"
+      val expectedMessage = "ConfigParsingError(" +
+        "message = Couldn't load [MongoConfig] at path [application.persistence.mongodb]. " +
+        "Error [Path not found in config], " +
+        "pos = $organization$.util.config.RichConfig#load:25)"
       $else$
-      error.getMessage shouldBe "Couldn't load [ApiConfig] at path [application.api]. Error [Path not found in config]"
+      val expectedMessage = "ConfigParsingError(" +
+        "message = Couldn't load [ApiConfig] at path [application.api]. " +
+        "Error [Path not found in config], " +
+        "pos = $organization$.util.config.RichConfig#load:25)"
       $endif$
+
+
+      error.getMessage shouldBe expectedMessage
+
+      deferFuture(system.whenTerminated).runSyncUnsafe() shouldBe right
     }
 
     "load application" in withSystem { implicit system =>

@@ -11,9 +11,9 @@ class MongoRepositorySpec extends ITSpec {
 
     "persist and retrieve a value" in {
       val collectionName = randomNonEmptyString()
-      val repository = new MongoRepository[BsonDocument](persistenceModule.mongoDatabase, collectionName)
+      val repository     = new MongoRepository[BsonDocument](persistenceModule.mongoDatabase, collectionName)
 
-      val name = randomString()
+      val name   = randomString()
       val number = Random.nextInt()
 
       val document = BsonDocument("name" -> name, "number" -> number)

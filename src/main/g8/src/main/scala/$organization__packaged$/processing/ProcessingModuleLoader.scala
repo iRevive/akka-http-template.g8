@@ -6,19 +6,12 @@ import $organization$.util.ResultT.unit
 import $organization$.util.logging.{Logging, TraceId}
 import com.typesafe.config.Config
 
-trait ProcessingModuleLoader extends Logging {
+class ProcessingModuleLoader(rootConfig: Config, persistenceModule: PersistenceModule) extends Logging {
 
-  def loadProcessingModule(rootConfig: Config, persistenceModule: PersistenceModule)
-                          (implicit traceId: TraceId): ResultT[ProcessingModule] = {
+  def loadProcessingModule()(implicit traceId: TraceId): ResultT[ProcessingModule] = {
     for {
       _ <- unit()
     } yield new ProcessingModule()
   }
-
-}
-
-object ProcessingModuleLoader {
-
-  object Default extends ProcessingModuleLoader
 
 }

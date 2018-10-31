@@ -106,7 +106,7 @@ class ResultTOpsSpec extends BaseSpec {
 
       private lazy val exception = new RuntimeException("my error")
 
-      override def delayedValue: Future[String] = Future(1) flatMap { _ => throw exception }
+      override def delayedValue: Future[String] = Future(1).flatMap(_ => throw exception)
 
       override def matcher(v: Either[BaseError, String]): Assertion =
         v.leftMap(_.message) shouldBe Left(Loggable[Throwable].show(exception))

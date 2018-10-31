@@ -131,7 +131,7 @@ trait BsonDecoderInstances {
     }
   }
 
-  implicit def mapBsonDecoder[A, B: BsonDecoder](implicit view: String => A): BsonDecoder[Map[A, B]] = (value: BsonValue) => {
+  implicit def mapBsonDecoder[A, B: BsonDecoder](implicit view: String => A): BsonDecoder[Map[A, B]] = value => {
     Option(value) match {
       case None =>
         Right(Map.empty)
@@ -206,12 +206,11 @@ trait BsonDecoderInstances {
           case Left(err) => Left(MongoError.BsonDecodingError(new IllegalArgumentException(err)))
           case Right(t)  => Right(t)
         }
-      case Left(e)   => Left(e)
+      case Left(e) => Left(e)
     }
   }
 
 }
-
 
 object BsonDecoderDerivation {
 
@@ -230,7 +229,7 @@ object BsonDecoderDerivation {
 
   def dispatch[T](ctx: SealedTrait[Typeclass, T]): Typeclass[T] = new UnsafeBsonDecoder[T]() {
     override protected def unsafeReader(value: BsonValue): T = {
-      throw new IllegalArgumentException("Trait decoding is not supported")
+      throw new IllegalArgumentException(s"Decoding of trait [\${ctx.typeName}] is not supported [\$value]")
     }
   }
 

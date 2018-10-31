@@ -6,8 +6,8 @@ sealed trait MongoError extends BaseError
 
 object MongoError {
 
-  case class UnhandledMongoError(cause: Throwable)(implicit val pos: Position) extends MongoError with ThrowableError
+  final case class UnhandledMongoError(cause: Throwable)(implicit val pos: Position) extends MongoError with ThrowableError
 
-  case class BsonDecodingError(cause: Throwable)(implicit val pos: Position) extends MongoError with ThrowableError
+  final case class BsonDecodingError(cause: Throwable)(implicit val pos: Position) extends MongoError with ThrowableError
 
 }

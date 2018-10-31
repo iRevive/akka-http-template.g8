@@ -21,11 +21,12 @@ class JsonOpsSpec extends BaseSpec {
         val input =
           """{"field": null"""
 
-        inside(JsonOps.parseJson(input).leftValue) { case error@NonParsableJson(receivedInput, _) =>
-          val expectedMessage = log"Could not parse json from input [\$input]. Error: [exhausted input]"
+        inside(JsonOps.parseJson(input).leftValue) {
+          case error @ NonParsableJson(receivedInput, _) =>
+            val expectedMessage = log"Could not parse json from input [\$input]. Error: [exhausted input]"
 
-          receivedInput shouldBe input
-          error.message shouldBe expectedMessage
+            receivedInput shouldBe input
+            error.message shouldBe expectedMessage
         }
       }
 
@@ -50,11 +51,12 @@ class JsonOpsSpec extends BaseSpec {
 
         val bytes = input.getBytes(StandardCharsets.UTF_8)
 
-        inside(JsonOps.decode[JsonModel](bytes).leftValue) { case error@NonParsableJson(receivedInput, _) =>
-          val expectedMessage = log"Could not parse json from input [\$input]. Error: [exhausted input]"
+        inside(JsonOps.decode[JsonModel](bytes).leftValue) {
+          case error @ NonParsableJson(receivedInput, _) =>
+            val expectedMessage = log"Could not parse json from input [\$input]. Error: [exhausted input]"
 
-          receivedInput shouldBe input
-          error.message shouldBe expectedMessage
+            receivedInput shouldBe input
+            error.message shouldBe expectedMessage
         }
       }
 
@@ -69,15 +71,16 @@ class JsonOpsSpec extends BaseSpec {
 
         val bytes = input.getBytes(StandardCharsets.UTF_8)
 
-        inside(JsonOps.decode[JsonModel](bytes).leftValue) { case error@JsonDecodingError(json, className, _) =>
-          val expectedJson = io.circe.parser.parse(input).value
+        inside(JsonOps.decode[JsonModel](bytes).leftValue) {
+          case error @ JsonDecodingError(json, className, _) =>
+            val expectedJson = io.circe.parser.parse(input).value
 
-          val expectedMessage = s"Could not parse json as [JsonModel] from input [\${expectedJson.noSpaces}]. " +
-            "Errors: [String: DownField(field1), Attempt to decode value on failed cursor: DownField(field2)]"
+            val expectedMessage = s"Could not parse json as [JsonModel] from input [\${expectedJson.noSpaces}]. " +
+              "Errors: [String: DownField(field1), Attempt to decode value on failed cursor: DownField(field2)]"
 
-          expectedJson shouldBe json
-          className shouldBe "JsonModel"
-          error.message shouldBe expectedMessage
+            expectedJson shouldBe json
+            className shouldBe "JsonModel"
+            error.message shouldBe expectedMessage
         }
       }
 

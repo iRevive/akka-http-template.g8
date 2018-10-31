@@ -52,11 +52,13 @@ class LoggableSpec extends BaseSpec {
 
 object LoggableSpec {
 
-  case class TestClass(arg1: Option[String],
-                       arg2: Option[Double],
-                       arg3: Option[Double],
-                       arg4: List[Long],
-                       arg5: List[Long])
+  case class TestClass(
+      arg1: Option[String],
+      arg2: Option[Double],
+      arg3: Option[Double],
+      arg4: List[Long],
+      arg5: List[Long]
+  )
 
   case class ValueClassTest(arg: String) extends AnyVal
 

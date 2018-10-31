@@ -34,15 +34,15 @@ object BsonEncoder extends BsonEncoderInstances {
 
 trait BsonEncoderInstances {
 
-  implicit val stringBsonEncoder       : BsonEncoder[String]            = v => BsonString(v)
-  implicit val intBsonEncoder          : BsonEncoder[Int]               = v => BsonNumber(v)
-  implicit val longBsonEncoder         : BsonEncoder[Long]              = v => BsonNumber(v)
-  implicit val doubleBsonEncoder       : BsonEncoder[Double]            = v => BsonNumber(v)
-  implicit val bigDecimalBsonEncoder   : BsonEncoder[BigDecimal]        = v => BsonDecimal128(v)
-  implicit val binaryBsonEncoder       : BsonEncoder[Array[Byte]]       = v => BsonBinary(v)
-  implicit val booleanBsonEncoder      : BsonEncoder[Boolean]           = v => BsonBoolean(v)
-  implicit val objectIdBsonEncoder     : BsonEncoder[ObjectId]          = v => BsonObjectId(v)
-  implicit val bsonDocumentEncoder     : BsonEncoder[BsonDocument]      = v => v
+  implicit val stringBsonEncoder: BsonEncoder[String]                   = v => BsonString(v)
+  implicit val intBsonEncoder: BsonEncoder[Int]                         = v => BsonNumber(v)
+  implicit val longBsonEncoder: BsonEncoder[Long]                       = v => BsonNumber(v)
+  implicit val doubleBsonEncoder: BsonEncoder[Double]                   = v => BsonNumber(v)
+  implicit val bigDecimalBsonEncoder: BsonEncoder[BigDecimal]           = v => BsonDecimal128(v)
+  implicit val binaryBsonEncoder: BsonEncoder[Array[Byte]]              = v => BsonBinary(v)
+  implicit val booleanBsonEncoder: BsonEncoder[Boolean]                 = v => BsonBoolean(v)
+  implicit val objectIdBsonEncoder: BsonEncoder[ObjectId]               = v => BsonObjectId(v)
+  implicit val bsonDocumentEncoder: BsonEncoder[BsonDocument]           = v => v
   implicit val immutableDocumentEncoder: BsonEncoder[ImmutableDocument] = v => v.toBsonDocument
 
   implicit val zonedDateTimeBsonEncoder: BsonEncoder[ZonedDateTime] = v => {
@@ -88,9 +88,8 @@ object BsonEncoderDerivation {
     if (ctx.isValueClass) {
       throw new IllegalArgumentException("Value class cannot be encoded via derived instance")
     } else {
-      val args = ctx
-        .parameters
-        .map { param => param.label -> param.typeclass.encode(param.dereference(value)) }
+      val args = ctx.parameters
+        .map(param => (param.label, param.typeclass.encode(param.dereference(value))))
 
       BsonDocument(args)
     }

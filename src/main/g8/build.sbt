@@ -15,10 +15,6 @@ lazy val root = (project in file("."))
   .settings(dockerSettings)
   .settings(releaseSettings)
   .settings(commandSettings)
-  .settings(
-    name := Settings.name,
-    libraryDependencies ++= Dependencies.root
-  )
 
 lazy val commonSettings = Seq(
   organization := Settings.organization,
@@ -26,6 +22,7 @@ lazy val commonSettings = Seq(
   scalaVersion := Versions.scala,
   scalacOptions ++= commonOptions ++ warnOptions ++ lintOptions,
   resolvers ++= Seq(Resolver.mavenLocal, Resolver.sbtPluginRepo("releases")),
+  libraryDependencies ++= Dependencies.root,
   addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
 )
 
@@ -57,7 +54,7 @@ lazy val itEnvironment = {
     fork in IntegrationTest := true,
 
     javaOptions in IntegrationTest := Seq(
-      "-DMONGODB_URL=mongodb://localhost:53123/",
+      "-DMONGODB_URI=mongodb://localhost:53123/",
       "-Dorg.mongodb.async.type=netty"
     )
   )

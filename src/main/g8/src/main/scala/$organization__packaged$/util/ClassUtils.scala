@@ -4,14 +4,15 @@ object ClassUtils {
 
   /**
     * Hack to avoid scala compiler bug with getSimpleName
+    *
     * @see https://issues.scala-lang.org/browse/SI-2034
     */
   def getClassSimpleName(clazz: Class[_]): String = {
     try {
       clazz.getSimpleName.stripSuffix("\$")
     } catch {
-      case _: InternalError ⇒
-        val fullName = clazz.getName.stripSuffix("\$")
+      case _: InternalError =>
+        val fullName      = clazz.getName.stripSuffix("\$")
         val fullClassName = fullName.substring(fullName.lastIndexOf(".") + 1)
         fullClassName.substring(fullClassName.lastIndexOf("\$") + 1)
     }

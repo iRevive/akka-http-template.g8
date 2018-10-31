@@ -1,11 +1,11 @@
 package $organization$.persistence
 
+import com.typesafe.config.ConfigFactory
 $if(useMongo.truthy)$
 import $organization$.persistence.mongo.MongoConfig
 import $organization$.persistence.mongo.MongoError.UnhandledMongoError
 import $organization$.it.ITSpec
 import $organization$.util.config.ConfigParsingError
-import com.typesafe.config.ConfigFactory
 import monix.eval.Task
 import org.mongodb.scala.MongoDatabase
 $else$
@@ -31,7 +31,7 @@ class PersistenceModuleLoaderSpec extends ITSpec {
             """.stripMargin
           )
 
-          val error = defaultLoader.loadMongoDatabase(config).runSyncUnsafe().leftValue
+          val error = new PersistenceModuleLoader(config).loadMongoDatabase().runSyncUnsafe().leftValue
 
           inside(error) {
             case ConfigParsingError(path, expectedClass, err) =>
@@ -45,7 +45,7 @@ class PersistenceModuleLoaderSpec extends ITSpec {
           val config = ConfigFactory.parseString(
             """
               |application.persistence.mongodb {
-              |  url = "mongodb://localhost:27017/?streamType=netty"
+              |  uri = "mongodb://localhost:27017/?streamType=netty"
               |  database = "$name_normalized$"
               |  connection-attempt-timeout = 500 milliseconds
               |  retry-policy {
@@ -56,7 +56,7 @@ class PersistenceModuleLoaderSpec extends ITSpec {
             """.stripMargin
           )
 
-          val error = defaultLoader.loadMongoDatabase(config).runSyncUnsafe().leftValue
+          val error = new PersistenceModuleLoader(config).loadMongoDatabase().runSyncUnsafe().leftValue
 
           inside(error) {
             case ConfigParsingError(path, expectedClass, err) =>
@@ -70,7 +70,7 @@ class PersistenceModuleLoaderSpec extends ITSpec {
           val config = ConfigFactory.parseString(
             """
               |application.persistence.mongodb {
-              |  url = "mongodb://localhost:27017/?streamType=netty"
+              |  uri = "mongodb://localhost:27017/?streamType=netty"
               |  database = "$name_normalized$"
               |  connection-attempt-timeout = 5 milliseconds
               |  retry-policy {
@@ -84,7 +84,7 @@ class PersistenceModuleLoaderSpec extends ITSpec {
 
           var counter = 0
 
-          val loader = new PersistenceModuleLoader {
+          val loader = new PersistenceModuleLoader(config) {
             override private[persistence] def mongoConnectionAttempt(db: MongoDatabase, config: MongoConfig): Task[Unit] = {
               for {
                 _ <- Task.eval { counter = counter + 1 }
@@ -93,7 +93,7 @@ class PersistenceModuleLoaderSpec extends ITSpec {
             }
           }
 
-          val error = loader.loadMongoDatabase(config).runSyncUnsafe().leftValue
+          val error = loader.loadMongoDatabase().runSyncUnsafe().leftValue
 
           inside(error) {
             case UnhandledMongoError(cause) =>
@@ -109,7 +109,5 @@ class PersistenceModuleLoaderSpec extends ITSpec {
     $endif$
 
   }
-
-  private def defaultLoader: PersistenceModuleLoader = PersistenceModuleLoader.Default
 
 }

@@ -6,7 +6,7 @@ import io.circe.Decoder
 /**
   * See https://github.com/circe/circe-config/issues/12
   */
-case class ConfigBoolean(value: Boolean)
+final case class ConfigBoolean(value: Boolean)
 
 object ConfigBoolean {
 
@@ -18,7 +18,7 @@ object ConfigBoolean {
     val truthful = Set("true", "yes", "on")
 
     val booleanDecoder = Decoder.decodeBoolean.map(ConfigBoolean.apply)
-    val stringDecoder = Decoder.decodeString.map(s => ConfigBoolean(truthful.contains(s)))
+    val stringDecoder  = Decoder.decodeString.map(s => ConfigBoolean(truthful.contains(s)))
 
     booleanDecoder.or(stringDecoder)
   }

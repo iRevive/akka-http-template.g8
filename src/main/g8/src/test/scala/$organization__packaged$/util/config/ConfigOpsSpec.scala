@@ -71,13 +71,14 @@ class ConfigOpsSpec extends BaseSpec {
 
           val result = config.loadMeta[ConfigModel]("service").leftValue
 
-          inside(result) { case error@ConfigParsingError(path, expectedClass, _) =>
-            val errorMessage = s"Error [Couldn't parse [\$input] as config]"
-            val expectedMessage = s"Couldn't load [ConfigModel] at path [service]. \$errorMessage"
+          inside(result) {
+            case error @ ConfigParsingError(path, expectedClass, _) =>
+              val errorMessage    = s"Error [Couldn't parse [\$input] as config]"
+              val expectedMessage = s"Couldn't load [ConfigModel] at path [service]. \$errorMessage"
 
-            path shouldBe "service"
-            expectedClass shouldBe "ConfigModel"
-            error.message shouldBe expectedMessage
+              path shouldBe "service"
+              expectedClass shouldBe "ConfigModel"
+              error.message shouldBe expectedMessage
           }
         }
 
@@ -124,7 +125,6 @@ class ConfigOpsSpec extends BaseSpec {
   }
 
 }
-
 
 object ConfigOpsSpec {
 

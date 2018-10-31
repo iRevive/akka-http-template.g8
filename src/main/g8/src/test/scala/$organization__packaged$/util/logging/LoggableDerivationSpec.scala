@@ -38,18 +38,36 @@ class LoggableDerivationSpec extends BaseSpec {
       result shouldBe expected
     }
 
+    "derive typeclass for a sealed trait" in {
+      val loggableInstance = LoggableDerivation.derive[TraitType]
+
+      val obj1 = TraitType1("arg 1 string")
+      val obj2 = TraitType2(1)
+
+      loggableInstance.show(obj1) shouldBe "TraitType1(arg1 = arg 1 string)"
+      loggableInstance.show(obj2) shouldBe "TraitType2(arg1 = 1)"
+    }
+
   }
 
 }
 
 object LoggableDerivationSpec {
 
-  case class TestClass(arg1: Option[String],
-                       arg2: Option[Double],
-                       arg3: Option[Double],
-                       arg4: List[Long],
-                       arg5: List[Long])
+  case class TestClass(
+      arg1: Option[String],
+      arg2: Option[Double],
+      arg3: Option[Double],
+      arg4: List[Long],
+      arg5: List[Long]
+  )
 
   case class ValueClassTest(arg: String) extends AnyVal
+
+  sealed trait TraitType
+
+  case class TraitType1(arg1: String) extends TraitType
+
+  case class TraitType2(arg1: Int) extends TraitType
 
 }

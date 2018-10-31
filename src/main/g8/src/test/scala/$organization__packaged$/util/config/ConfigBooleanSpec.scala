@@ -17,7 +17,8 @@ class ConfigBooleanSpec extends WordSpec with Matchers {
         port = 8080
         enabled = on
         enabled2 = true
-      """)
+        """
+      )
       val Right(ServerConfig(_, _, enabled, enabled2)) = config.as[ServerConfig]
       assert(enabled.value)
       assert(enabled)
@@ -41,4 +42,3 @@ class ConfigBooleanSpec extends WordSpec with Matchers {
   case class ServerConfig(host: String, port: Int, enabled: ConfigBoolean, enabled2: ConfigBoolean)
 
 }
-

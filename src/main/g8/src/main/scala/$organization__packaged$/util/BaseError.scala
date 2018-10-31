@@ -8,12 +8,16 @@ trait BaseError {
 
   def pos: Position
 
+  def toRuntimeException: RuntimeException = new RuntimeException(toString)
+
   override def toString: String = Loggable[BaseError].show(this)
 }
 
 trait ThrowableError extends BaseError {
 
   def cause: Throwable
+
+  override def toRuntimeException: RuntimeException = new RuntimeException(toString, cause)
 
   override def message: String = Loggable[Throwable].show(cause)
 

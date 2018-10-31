@@ -8,7 +8,7 @@ services:
       APPLICATION_HTTP_HOST: "0.0.0.0"
       APPLICATION_HTTP_PORT: 9000
       LOG_LEVEL: "INFO"
-      $if(useMongo.truthy)$MONGODB_URL: "mongodb://mongodb:27017/"$endif$
+      $if(useMongo.truthy)$MONGODB_URI: "mongodb://mongodb:27017/"$endif$
     ports:
       - 9000:9000
     $if(useMongo.truthy)$

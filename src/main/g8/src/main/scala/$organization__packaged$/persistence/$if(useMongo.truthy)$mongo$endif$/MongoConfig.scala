@@ -9,7 +9,7 @@ import eu.timepit.refined.types.string.NonEmptyString
 import scala.concurrent.duration.FiniteDuration
 
 final case class MongoConfig(
-    url: String Refined Uri,
+    uri: String Refined Uri,
     database: NonEmptyString,
     connectionAttemptTimeout: FiniteDuration,
     retryPolicy: RetryPolicy

@@ -57,14 +57,14 @@ object Loggable extends LoggableInstances {
 
 trait LoggableInstances {
 
-  implicit val stringLoggable: Loggable[String] = Loggable.instance(identity)
-  implicit val intLoggable: Loggable[Int] = Loggable.fromToString
-  implicit val shortLoggable: Loggable[Short] = Loggable.fromToString
-  implicit val longLoggable: Loggable[Long] = Loggable.fromToString
-  implicit val doubleLoggable: Loggable[Double] = Loggable.fromToString
-  implicit val floatLoggable: Loggable[Float] = Loggable.fromToString
+  implicit val stringLoggable: Loggable[String]   = Loggable.fromToString
+  implicit val intLoggable: Loggable[Int]         = Loggable.fromToString
+  implicit val shortLoggable: Loggable[Short]     = Loggable.fromToString
+  implicit val longLoggable: Loggable[Long]       = Loggable.fromToString
+  implicit val doubleLoggable: Loggable[Double]   = Loggable.fromToString
+  implicit val floatLoggable: Loggable[Float]     = Loggable.fromToString
   implicit val booleanLoggable: Loggable[Boolean] = Loggable.fromToString
-  implicit val uuidLoggable: Loggable[UUID] = Loggable.fromToString
+  implicit val uuidLoggable: Loggable[UUID]       = Loggable.fromToString
 
   implicit val positionLoggable: Loggable[Position] = Loggable.instance(v => s"Position(\${v.fullPosition})")
 
@@ -82,14 +82,14 @@ trait LoggableInstances {
 
   implicit val circeJsonLoggable: Loggable[io.circe.Json] = Loggable.instance(_.noSpaces)
 
-  implicit val akkaHttpRequestLoggable: Loggable[HttpRequest] = Loggable.fromToString
+  implicit val akkaHttpRequestLoggable: Loggable[HttpRequest]   = Loggable.fromToString
   implicit val akkaHttpResponseLoggable: Loggable[HttpResponse] = Loggable.fromToString
   implicit val akkaHttpStatusCodeLoggable: Loggable[StatusCode] = Loggable.fromToString
 
   implicit val throwableLoggable: Loggable[Throwable] =
     Loggable instance { throwable =>
       val className = ClassUtils.getClassSimpleName(throwable.getClass)
-      val message = Option(throwable.getMessage).getOrElse("<empty message>")
+      val message   = Option(throwable.getMessage).getOrElse("<empty message>")
 
       s"\$className(\$message)"
     }
@@ -116,13 +116,14 @@ trait LoggableInstances {
     }
 
   implicit def tuple2[A, B](implicit a: Loggable[A], b: Loggable[B]): Loggable[(A, B)] =
-    Loggable instance { case (first, second) =>
-      s"(\${a.show(first)}, \${b.show(second)})"
+    Loggable instance {
+      case (first, second) =>
+        s"(\${a.show(first)}, \${b.show(second)})"
     }
 
   implicit def eitherLoggable[A, B](implicit left: Loggable[A], right: Loggable[B]): Loggable[Either[A, B]] =
     Loggable instance {
-      case Left(value) => s"Left(\${left.show(value)})"
+      case Left(value)  => s"Left(\${left.show(value)})"
       case Right(value) => s"Right(\${right.show(value)})"
     }
 

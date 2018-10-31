@@ -17,7 +17,7 @@ object JsonOps {
     parse(input).leftMap(e => JsonParsingError.NonParsableJson(input, e))
   }
 
-  def decode[A: Decoder : ClassTag](input: Array[Byte], charset: Charset = StandardCharsets.UTF_8): Either[BaseError, A] = {
+  def decode[A: Decoder: ClassTag](input: Array[Byte], charset: Charset = StandardCharsets.UTF_8): Either[BaseError, A] = {
     for {
       rawJson <- Either.catchNonFatal(new String(input, charset)).leftMap(UnsupportedString(input, charset, _))
 
@@ -25,7 +25,7 @@ object JsonOps {
     } yield result
   }
 
-  def decode[A: Decoder : ClassTag](input: String): Either[BaseError, A] = {
+  def decode[A: Decoder: ClassTag](input: String): Either[BaseError, A] = {
     for {
       json <- JsonOps.parseJson(input)
 
@@ -37,7 +37,7 @@ object JsonOps {
     decoder
       .accumulating(json.hcursor)
       .toEither
-      .leftMap { errors => JsonDecodingError(json, ClassUtils.getClassSimpleName(ct.runtimeClass), errors) }
+      .leftMap(errors => JsonDecodingError(json, ClassUtils.getClassSimpleName(ct.runtimeClass), errors))
   }
 
 }

@@ -24,16 +24,16 @@ $if(useMongo.truthy)$
 import scala.concurrent.TimeoutException
 $endif$
 
-trait PersistenceModuleLoader extends Logging {
+class PersistenceModuleLoader(rootConfig: Config) extends Logging {
 
   $if(useMongo.truthy)$
-  def loadPersistenceModule(rootConfig: Config)(implicit traceId: TraceId): ResultT[PersistenceModule] = {
+  def loadPersistenceModule()(implicit traceId: TraceId): ResultT[PersistenceModule] = {
     for {
-      mongoDatabase <- loadMongoDatabase(rootConfig)
+      mongoDatabase <- loadMongoDatabase()
     } yield new PersistenceModule(mongoDatabase)
   }
   $else$
-  def loadPersistenceModule(rootConfig: Config)(implicit traceId: TraceId): ResultT[PersistenceModule] = {
+  def loadPersistenceModule()(implicit traceId: TraceId): ResultT[PersistenceModule] = {
     import $organization$.util.ResultT.unit
 
     for {
@@ -44,7 +44,7 @@ trait PersistenceModuleLoader extends Logging {
 
 
   $if(useMongo.truthy)$
-  private[persistence] def loadMongoDatabase(rootConfig: Config)(implicit traceId: TraceId): ResultT[MongoDatabase] = {
+  private[persistence] def loadMongoDatabase()(implicit traceId: TraceId): ResultT[MongoDatabase] = {
     for {
       mongoConfig <- evalEither(rootConfig.load[MongoConfig]("application.persistence.mongodb"))
 
@@ -67,7 +67,7 @@ trait PersistenceModuleLoader extends Logging {
     val dbAsync = for {
       _ <- Task.eval(logger.info(log"Loading MongoDB module with config \$config"))
 
-      client <- Task.eval(MongoClient(config.url.value))
+      client <- Task.eval(MongoClient(config.uri.value))
 
       db <- closeClientOnError(
         client,
@@ -101,11 +101,5 @@ trait PersistenceModuleLoader extends Logging {
       .timeoutTo(config.connectionAttemptTimeout, timeoutTo)
   }
   $endif$
-
-}
-
-object PersistenceModuleLoader {
-
-  object Default extends PersistenceModuleLoader
 
 }

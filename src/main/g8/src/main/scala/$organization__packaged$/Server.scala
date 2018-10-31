@@ -7,7 +7,7 @@ import cats.syntax.apply._
 import $organization$.util.ResultT.{deferFuture, eval}
 import $organization$.util.logging.Loggable.InterpolatorOps._
 import $organization$.util.logging.{Logging, TraceId}
-import $organization$.util.{BaseError, ThrowableError, TimeUtils}
+import $organization$.util.{BaseError, TimeUtils}
 import monix.eval.Task
 import monix.execution.Scheduler
 
@@ -40,15 +40,10 @@ object Server extends Logging {
       case Right(()) =>
         Task(logger.info("Application started successfully"))
 
-      case Left(error: ThrowableError) =>
-        Task(logger.error(log"Error during application initialization. \$error", error.cause)) *>
-          terminator *>
-          Task.raiseError(error.cause)
-
       case Left(error) =>
-        Task(logger.error(log"Error during application initialization. \$error")) *>
+        Task(logger.withError(log"Error during application initialization. \$error", error)) *>
           terminator *>
-          Task.raiseError(new RuntimeException(error.message))
+          Task.raiseError(error.toRuntimeException)
     }
 
     def onError(unhandledError: Throwable): Task[Unit] = {

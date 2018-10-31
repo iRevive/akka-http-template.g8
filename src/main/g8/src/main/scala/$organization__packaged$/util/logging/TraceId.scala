@@ -4,7 +4,7 @@ import java.util.UUID
 
 import com.typesafe.scalalogging.CanLog
 
-case class TraceId(value: String = UUID.randomUUID().toString) {
+final case class TraceId(value: String = UUID.randomUUID().toString) {
 
   def subId(id: String): TraceId = copy(value + "#" + id)
 

@@ -36,7 +36,7 @@ $endif$
 ## <a name="development-requirements"></a> Development requirements
 1) Scala $scala_version$;  
 2) SBT $sbt_version$;  
-3) Docker
+3) Docker;
 
 ## <a name="environment-installation"></a> Environment installation
 
@@ -80,7 +80,10 @@ sbt it:test
 ```
 sbt 'set coverageEnabled := true' clean coverage test it:test coverageReport
 ```
-
+or 
+```
+sbt testAll
+```
 Coverage reports will be in `target/scala-2.12/scoverage-report`. There are HTML and XML reports. The XML is useful if you need to programatically use the results, or if you're writing a tool.  
  
  

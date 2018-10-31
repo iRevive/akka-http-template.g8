@@ -75,7 +75,8 @@ class TaskUtilsSpec extends WordSpec with Matchers {
 
         val retryPolicy = RetryPolicy(5, 30.millis, 40.millis)
 
-        val error = intercept[Exception](TaskUtils.retry("retry spec", task, retryPolicy, timeoutError).runSyncUnsafe(500.millis))
+        val error =
+          intercept[Exception](TaskUtils.retry("retry spec", task, retryPolicy, timeoutError).runSyncUnsafe(500.millis))
 
         error shouldBe timeoutException
         inc shouldBe 2
