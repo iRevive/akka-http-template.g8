@@ -30,8 +30,12 @@ $endif$
 
 
 ## <a name="project-structure"></a> Project structure
-1) `<root>/src/main/resources/application.conf` - configuration file;  
-2) `<root>/src/main/resources/logback.xml` - logback configuration;
+1) [src/main/scala/.../api](/src/main/scala/$organization$/api) - API endpoints;  
+2) [src/main/scala/.../persistence](/src/main/scala/$organization$/persistence) - persistence-specific logic (mongo client, mappings, etc);    
+3) [src/main/scala/.../processing](/src/main/scala/$organization$/processing) - processing-specific logic (services, etc);  
+5) [src/main/scala/.../util](/src/main/scala/$organization$/util) - utility classes;  
+6) [src/main/scala/.../Server.scala](/src/main/scala/$organization$/Server.scala) - application entry point; 
+7) [src/main/resources](/src/main/resources) - application and logback configs;    
 
 ## <a name="development-requirements"></a> Development requirements
 1) Scala $scala_version$;  
